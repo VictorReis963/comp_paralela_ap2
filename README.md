@@ -25,8 +25,7 @@ gcc -O2 -fopenmp analyzer_par_critical.c hash_table.c -o analyzer_par_critical
 defina a quantidade de nucleos (threads) que quer usar e rode o programa passando o arquivo de log.
 
 ```Bash
-export OMP_NUM_THREADS=4
-./analyzer_par_critical log_distribuido.txt
+export OMP_NUM_THREADS=4 && time ./analyzer_par_critical log_distribuido.txt
 ```
 
 5. validar os resultados
