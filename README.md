@@ -1,4 +1,4 @@
-analisador de logs - openmp critical
+# analisador de logs - openmp critical
 este projeto faz a contagem de acessos de urls em arquivos de log gigantes usando computacao paralela com openmp
 
 1. gerar os dados de teste
