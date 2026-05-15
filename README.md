@@ -4,8 +4,10 @@ este projeto faz a contagem de acessos de urls em arquivos de log gigantes usand
 1. gerar os dados de teste
 primeiro voce precisa criar os arquivos de log e o gabarito. o script vai gerar os textos e compactar em um arquivo zip automaticamente.
 
-Bash
+```Bash
 python3 generate_cdn_data.py
+```
+
 2. extrair os arquivos
 extraia os logs que estao dentro do pacote zip para a pasta atual.
 
