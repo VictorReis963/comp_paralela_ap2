@@ -4,63 +4,73 @@
 #include <omp.h>
 #include "hash_table.h"
 
-#define MAX_LINE 1024
-#define HASH_SIZE 131071 
-#define MAX_LOG_LINES 10000000 
+#define max_line 1024
+#define hash_size 131071 
+#define max_log_lines 10000000 
 
 int main(int argc, char *argv[]) {
+    // verifica se o usuario passou o nome do arquivo de log ao rodar
     if (argc < 2) {
-        printf("Uso: %s <arquivo_de_log>\n", argv[0]);
+        printf("uso: %s <arquivo_de_log>\n", argv[0]);
         return 1;
     }
 
-    HashTable *ht = ht_create(HASH_SIZE);
+    // cria a estrutura da tabela que vai guardar os contadores
+    hashtable *ht = ht_create(hash_size);
 
-    // Fase 1 - construção sequencial do manifest
-    FILE *mf = fopen("manifest.txt", "r");
+    // fase 1 le o arquivo manifest que tem a lista de sites conhecidos
+    file *mf = fopen("manifest.txt", "r");
     if (!mf) {
-        perror("Erro ao abrir manifest.txt");
+        perror("erro ao abrir manifest.txt");
         return 1;
     }
 
-    char line[MAX_LINE];
-    while (fgets(line, MAX_LINE, mf)) {
+    char line[max_line];
+    while (fgets(line, max_line, mf)) {
+        // limpa restos de quebra de linha para o nome ficar limpo
         line[strcspn(line, "\r\n")] = 0; 
         if (strlen(line) > 0) {
+            // coloca o nome na tabela com contador valendo zero
             ht_insert(ht, line);
         }
     }
     fclose(mf);
 
-    // carregamento do Log para memoria
-    FILE *lf = fopen(argv[1], "r");
+    // abre o arquivo de log para comecar a leitura dos dados
+    file *lf = fopen(argv[1], "r");
     if (!lf) {
-        perror("Erro ao abrir arquivo de log");
+        perror("erro ao abrir arquivo de log");
         return 1;
     }
 
-    char **logs = malloc(MAX_LOG_LINES * sizeof(char*));
+    // reserva um espaco gigante na memoria para guardar as linhas do log
+    char **logs = malloc(max_log_lines * sizeof(char*));
     int count = 0;
-    while (count < MAX_LOG_LINES && fgets(line, MAX_LINE, lf)) {
+    // le as linhas do arquivo e guarda na memoria para as threads trabalharem
+    while (count < max_log_lines && fgets(line, max_line, lf)) {
         logs[count++] = strdup(line);
     }
     fclose(lf);
 
-    // fase 2 - Processamento paralelo com critical
+    // fase 2 aqui o trabalho e dividido entre varios nucleos do computador
     #pragma omp parallel for
     for (int i = 0; i < count; i++) {
-        char *start = strstr(logs[i], "GET ");
+        // procura o pedaco do texto que indica o inicio do endereco
+        char *start = strstr(logs[i], "get ");
         if (start) {
-            start += 4; 
-            char *end = strchr(start, ' '); 
+            start += 4; // pula o texto get e o espaco
+            char *end = strchr(start, ' '); // procura o espaco que vem depois do nome
             if (end) {
                 int url_len = end - start;
-                char url_buffer[MAX_LINE];
+                char url_buffer[max_line];
+                // copia apenas o nome do endereco para um pote temporario
                 strncpy(url_buffer, start, url_len);
                 url_buffer[url_len] = '\0';
 
-                CacheNode *node = ht_get(ht, url_buffer);
+                // busca esse endereco na tabela que criamos antes
+                cachenode *node = ht_get(ht, url_buffer);
                 if (node) {
+                    // so uma thread por vez pode entrar aqui para nao quebrar a conta
                     #pragma omp critical
                     {
                         node->hit_count++;
@@ -70,10 +80,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-
+    // depois de contar tudo grava o resultado final no arquivo csv
     ht_save_results(ht, "results.csv");
 
-    // Limpeza
+    // limpa a memoria que usamos para nao deixar o computador lento
     for(int i = 0; i < count; i++) free(logs[i]);
     free(logs);
 
