@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
         line[strcspn(line, "\r\n")] = 0; 
         if (strlen(line) > 0) {
             // coloca o nome na tabela com contador valendo zero
-            ht_insert(ht, line);
+            ht_put(ht, line);
         }
     }
     fclose(mf);
