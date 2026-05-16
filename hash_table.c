@@ -100,7 +100,7 @@ void ht_destroy(HashTable* ht) {
 /*
  * Insere um novo elemento
  */
-void ht_insert(HashTable* ht, const char* url) {
+void ht_put(HashTable* ht, const char* url) {
     if (!ht || !url) return;
     
     // 1. Calcula o índice (bucket)
